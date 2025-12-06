@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Card Profit Calculator (V8: Optimized UX)</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .input-group input:focus {
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+            border-color: #4299e1;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="max-w-4xl mx-auto bg-white shadow-2xl rounded-xl p-6 md:p-10">
+        <h1 class="3xl sm:text-4xl font-extrabold text-gray-800 mb-6 border-b pb-3">
+            Sports Card Profit Calculator (V8: Optimized UX)
+        </h1>
+        <p class="text-gray-600 mb-8">
+            The calculator uses standard defaults for quick analysis. Change any of the highlighted inputs below to model your specific sales.
+        </p>
+
+        <!-- START: NEW DOCUMENTATION SECTION FOR PUBLIC SHARING -->
+        <details class="mb-8 p-4 bg-gray-100 rounded-lg border border-gray-200">
+            <summary class="font-bold text-gray-700 cursor-pointer hover:text-indigo-600 transition duration-150">
+                Understanding the Calculations & Fee Logic (Details for Public Use)
+            </summary>
+            <div class="mt-3 text-sm text-gray-600 space-y-3">
+                <p>This calculator is designed to provide robust profit estimates based on standard sports card platform fee structures, but it is for informational use only. Always verify your official fees with the marketplace.</p>
+
+                <h4 class="font-semibold text-gray-800 mt-3">Key Definitions:</h4>
+                <ul class="list-disc list-inside space-y-1 ml-4">
+                    <li><strong class="text-indigo-600">Total Sale Amount (A):</strong> This is the net revenue received from the buyer, calculated as: (Item Price After Discount) + (Shipping Charged to Buyer). This amount is the basis for platform fees and marketing costs.</li>
+                    <li><strong class="text-indigo-600">Platform Fees:</strong> The Final Value Fee Percentage and the Fixed Per-Order Fee are both applied to the **Total Sale Amount (A)**.</li>
+                </ul>
+
+                <h4 class="font-semibold text-gray-800 mt-3">Overhead Allocation Formula:</h4>
+                <p>The **Allocated Overhead Cost** helps you account for yearly fixed business costs (like store subscriptions, tools, equipment, etc.) on a per-order basis. It is calculated proportionally based on the estimated sales volume:</p>
+                <div class="bg-white p-3 rounded-md shadow-inner overflow-x-auto">
+                    <code class="text-sm block whitespace-nowrap">
+                        $$ \text{Overhead Allocation} = \text{Total Sale Amount} \times \left( \frac{\text{Total Annual Fixed Costs}}{\text{Estimated Total Annual Sales Volume}} \right) $$
+                    </code>
+                </div>
+                <p>Ensure your <strong>Annual Fixed Costs</strong> and <strong>Estimated Total Annual Sales Volume</strong> inputs are accurate for meaningful results.</p>
+            </div>
+        </details>
+        <!-- END: NEW DOCUMENTATION SECTION -->
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- INPUTS COLUMN -->
+            <div class="lg:col-span-2 space-y-5">
+                <h2 class="text-xl font-bold text-indigo-600 mb-4 border-b pb-2">Order & Card Details</h2>
+
+                <!-- Input Group: Quantity -->
+                <div class="input-group">
+                    <label for="quantity" class="block text-sm font-medium text-gray-700">Number of Cards Sold (Quantity)</label>
+                    <input type="number" id="quantity" value="1" min="1" step="1" oninput="calculateProfit()"
+                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                </div>
+
+                <!-- Input Group: Single Card Price -->
+                <div class="input-group">
+                    <label for="itemPrice" class="block text-sm font-medium text-gray-700">Single Card Price (Pre-Discount, \$)</label>
+                    <input type="number" id="itemPrice" value="5.00" min="0" step="0.01" oninput="calculateProfit()"
+                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                </div>
+
+                <!-- Input Group: Single Card COGS -->
+                <div class="input-group">
+                    <label for="costOfGoods" class="block text-sm font-medium text-gray-700">Single Card Cost of Goods Sold (COGS, \$)</label>
+                    <input type="number" id="costOfGoods" value="1.00" min="0" step="0.01" oninput="calculateProfit()"
+                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                </div>
+
+                <hr class="my-6 border-indigo-200">
+                <h2 class="text-xl font-bold text-indigo-600 mb-4 border-b pb-2">Tiered Discount Settings (in %)</h2>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Input Group: 2 Cards Discount -->
+                    <div class="input-group">
+                        <label for="discount2Card" class="block text-sm font-medium text-gray-700">2 Cards Discount (%)</label>
+                        <input type="number" id="discount2Card" value="10" min="0" max="100" step="1" oninput="calculateProfit()"
+                            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    </div>
+
+                    <!-- Input Group: 3 Cards Discount -->
+                    <div class="input-group">
+                        <label for="discount3Card" class="block text-sm font-medium text-gray-700">3 Cards Discount (%)</label>
+                        <input type="number" id="discount3Card" value="15" min="0" max="100" step="1" oninput="calculateProfit()"
+                            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    </div>
+
+                    <!-- Input Group: 4 Cards Discount -->
+                    <div class="input-group">
+                        <label for="discount4Card" class="block text-sm font-medium text-gray-700">4 Cards Discount (%)</label>
+                        <input type="number" id="discount4Card" value="20" min="0" max="100" step="1" oninput="calculateProfit()"
+                            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    </div>
+
+                    <!-- Input Group: 5+ Cards Discount -->
+                    <div class="input-group">
+                        <label for="discount5PlusCard" class="block text-sm font-medium text-gray-700">5+ Cards Discount (%)</label>
+                        <input type="number" id="discount5PlusCard" value="25.00" min="0" max="100" step="0.01" oninput="calculateProfit()"
+                            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    </div>
+                </div>
+
+
+                <hr class="my-6 border-indigo-200">
+                <h2 class="text-xl font-bold text-indigo-600 mb-4 border-b pb-2">Order-Level Costs</h2>
+
+                <!-- Input Group: Shipping Charged to Buyer -->
+                <div class="input-group">
+                    <label for="shippingCharged" class="block text-sm font-medium text-gray-700">Shipping Charged to Buyer (\$)</label>
+                    <input type="number" id="shippingCharged" value="4.50" min="0" step="0.01" oninput="calculateProfit()"
+                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                </div>
+
+                <!-- Input Group: Actual Shipping Cost -->
+                <div class="input-group">
+                    <label for="shippingCost" class="block text-sm font-medium text-gray-700">Actual Shipping Cost You Pay (\$)</label>
+                    <input type="number" id="shippingCost" value="4.50" min="0" step="0.01" oninput="calculateProfit()"
+                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                </div>
+                
+                <!-- Input Group: Packaging Cost -->
+                <div class="input-group">
+                    <label for="packagingCost" class="block text-sm font-medium text-gray-700">Packaging/Envelope Cost (Per Order, \$)</label>
+                    <input type="number" id="packagingCost" value="0.15" min="0" step="0.01" oninput="calculateProfit()"
+                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                </div>
+                
+                <!-- Input Group: Marketing/Ad Rate -->
+                <div class="input-group">
+                    <label for="marketingCost" class="block text-sm font-medium text-gray-700">Marketing/Ad Rate (Promoted Listing %, applied to Total Sale)</label>
+                    <input type="number" id="marketingCost" value="0.00" min="0" step="0.1" oninput="calculateProfit()"
+                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    <p class="text-xs text-gray-500 mt-1">
+                        Enter the percentage (e.g., 5 for 5%) you are paying for Promoted Listings on the platform.
+                    </p>
+                </div>
+
+                <hr class="my-6 border-indigo-200">
+
+                <h2 class="text-xl font-bold text-indigo-600 mb-4 border-b pb-2">Inputs (Platform Fees & Overhead)</h2>
+                
+                <!-- Fee Preset Selector - UPDATED ORDER -->
+                <div class="input-group">
+                    <label for="feePreset" class="block text-sm font-medium text-gray-700">Platform Fee Preset (Ebay Sports Cards)</label>
+                    <select id="feePreset" onchange="updateFeeInputs()"
+                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 bg-white">
+                        <option value="default">Custom/Manual Entry</option> <!-- MOVED TO TOP -->
+                        <option value="standard" selected>Standard Seller (13.25%)</option>
+                        <option value="top_rated">Top Rated Seller (12.35%)</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">
+                        Selecting a preset will overwrite the percentage fields below. Choose Custom to enter your own rate.
+                    </p>
+                </div>
+
+                <!-- Input Group: Fee Percentage -->
+                <div class="input-group">
+                    <label for="feePercent" class="block text-sm font-medium text-gray-700">Final Value Fee Percentage (%)</label>
+                    <input type="number" id="feePercent" value="13.25" min="0" max="100" step="0.01" oninput="calculateProfit()"
+                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    <p class="text-xs text-gray-500 mt-1">e.g., enter 13.25 for 13.25%.</p>
+                </div>
+
+                <hr class="my-6 border-indigo-200">
+                <h3 class="text-md font-semibold text-gray-700 mb-2">Fixed Per-Order Fee Settings (Based on Total Sale)</h3>
+
+                <!-- Input Group: Fixed Fee Threshold -->
+                <div class="input-group">
+                    <label for="feeThreshold" class="block text-sm font-medium text-gray-700">Fixed Fee Threshold (\$)</label>
+                    <input type="number" id="feeThreshold" value="10.00" min="0" step="0.01" oninput="calculateProfit()"
+                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    <p class="text-xs text-gray-500 mt-1">The total sale amount used to determine the fixed fee rate.</p>
+                </div>
+                
+                <!-- Input Group: Standard Fixed Fee -->
+                <div class="input-group">
+                    <label for="fixedFeeStandard" id="fixedFeeStandardLabel" class="block text-sm font-medium text-gray-700">Standard Fixed Per-Order Fee (less than $10.00)</label>
+                    <input type="number" id="fixedFeeStandard" value="0.30" min="0" step="0.01" oninput="calculateProfit()"
+                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    <p class="text-xs text-gray-500 mt-1">Fee applied when Total Sale is **below** the threshold.</p>
+                </div>
+
+                <!-- Input Group: High-Value Fixed Fee -->
+                <div class="input-group">
+                    <label for="fixedFeeHighValue" id="fixedFeeHighValueLabel" class="block text-sm font-medium text-gray-700">High-Value Fixed Per-Order Fee ($10.00+)</label>
+                    <input type="number" id="fixedFeeHighValue" value="0.40" min="0" step="0.01" oninput="calculateProfit()"
+                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    <p class="text-xs text-gray-500 mt-1">Fee applied when Total Sale is **at or above** the threshold.</p>
+                </div>
+                
+                <hr class="my-6 border-indigo-200">
+                
+                <!-- Input Group: Annual Fixed Costs -->
+                <div class="input-group">
+                    <label for="annualFixedCost" class="block text-sm font-medium text-gray-700">Total Annual Fixed Costs (e.g., Store Subscription, Overhead)</label>
+                    <input type="number" id="annualFixedCost" value="720.00" min="0" step="0.01" oninput="calculateProfit()"
+                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    <p class="text-xs text-gray-500 mt-1">
+                        **Enter your actual yearly fixed costs.** This value is used to allocate a portion of your overhead to the current order.
+                    </p>
+                </div>
+
+                <!-- Input Group: Estimated Annual Sales -->
+                <div class="input-group">
+                    <label for="annualSalesEstimate" class="block text-sm font-medium text-gray-700">Estimated Total Annual Sales Volume (\$)</label>
+                    <input type="number" id="annualSalesEstimate" value="14000.00" min="1" step="0.01" oninput="calculateProfit()"
+                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    <p class="text-xs text-gray-500 mt-1">
+                        **Enter your expected yearly total sales.** This helps determine the per-order allocation of your fixed costs.
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- OUTPUTS COLUMN -->
+            <div class="lg:col-span-1">
+                <h2 class="text-xl font-bold text-indigo-600 mb-4 border-b pb-2">Order Summary</h2>
+
+                <div class="bg-indigo-50 p-5 rounded-xl shadow-inner space-y-4">
+
+                    <!-- Fixed Fee Applied -->
+                    <div class="flex justify-between items-center py-2 border-b bg-yellow-100 p-2 rounded-lg">
+                        <span class="text-sm font-bold text-yellow-800">Fixed Fee Applied</span>
+                        <span id="fixedFeeApplied" class="text-base font-extrabold text-yellow-800">$0.00</span>
+                    </div>
+
+                    <!-- Order Subtotal -->
+                    <div class="flex justify-between items-center py-2 border-b">
+                        <span class="text-sm font-medium text-gray-600">Total Item Price (Pre-Discount)</span>
+                        <span id="subtotal" class="text-lg font-semibold text-gray-800">$0.00</span>
+                    </div>
+
+                    <!-- Discount Applied -->
+                    <div class="flex justify-between items-center py-2 border-b">
+                        <span class="text-sm font-medium text-gray-600">Bulk Discount Applied</span>
+                        <span id="discountAmount" class="text-lg font-semibold text-red-600">-$0.00</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center py-2 border-b">
+                        <span class="text-sm font-medium text-gray-600">Discount Rate (%)</span>
+                        <span id="discountRateDisplay" class="text-lg font-semibold text-red-600">0.00%</span>
+                    </div>
+
+                    <!-- Calculated Metrics -->
+                    <div class="flex justify-between items-center py-2 border-b">
+                        <span class="text-sm font-medium text-gray-600">Total Sale Amount (A)</span>
+                        <span id="totalSale" class="text-xl font-bold text-indigo-800">$0.00</span>
+                    </div>
+
+                    <div class="flex justify-between items-center py-2 border-b">
+                        <span class="text-sm font-medium text-gray-600">Total COGS (Item Cost)</span>
+                        <span id="totalCogs" class="text-lg font-semibold text-red-600">-$0.00</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center py-2 border-b">
+                        <span class="text-sm font-medium text-gray-600">Advertising/Ad Cost (Calculated)</span>
+                        <span id="marketingDollarDisplay" class="text-lg font-semibold text-red-600">-$0.00</span>
+                    </div>
+
+                    <div class="flex justify-between items-center py-2 border-b">
+                        <span class="text-sm font-medium text-gray-600">Platform Fees (Variable + Fixed)</span>
+                        <span id="feeAmount" class="text-lg font-semibold text-red-600">-$0.00</span>
+                    </div>
+
+                    <div class="flex justify-between items-center py-2 border-b">
+                        <span class="text-sm font-medium text-gray-600">Allocated Overhead Cost</span>
+                        <span id="overheadAllocation" class="text-lg font-semibold text-red-600">-$0.00</span>
+                    </div>
+
+
+                    <div class="flex justify-between items-center pt-4 mt-4 border-t border-indigo-200">
+                        <span class="text-lg font-bold text-gray-800">NET PROFIT (Total Order)</span>
+                        <span id="netProfit" class="text-3xl font-extrabold text-green-700">$0.00</span>
+                    </div>
+                    
+                    <!-- Profit Per Card -->
+                    <div class="flex justify-between items-center pt-4">
+                        <span class="text-lg font-bold text-gray-800">NET PROFIT (Per Card)</span>
+                        <span id="profitPerCard" class="text-2xl font-extrabold text-green-700">$0.00</span>
+                    </div>
+
+                    <p id="profitMessage" class="text-xs mt-2 text-center text-gray-600"></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- NEW DISCLAIMER FOR PUBLIC USE -->
+        <div class="mt-10 pt-4 border-t border-gray-200 text-center text-xs text-gray-500">
+            Disclaimer: This Sports Card Profit Calculator provides estimates for modeling purposes only. The results are not financial advice. Users must verify all fees and costs with their respective platforms and tax advisors.
+        </div>
+        <!-- END DISCLAIMER -->
+    </div>
+
+    <script>
+        // Function to ensure a value is a valid number, defaulting to 0 if invalid
+        const safeParseFloat = (id) => {
+            const element = document.getElementById(id);
+            const value = +element.value;
+            return isNaN(value) ? 0 : value;
+        };
+
+        const formatCurrency = (amount, color = false) => {
+            const formatted = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(Math.abs(amount));
+
+            if (color) {
+                // Determine color and sign
+                if (amount > 0) return `<span class="text-green-700">${formatted}</span>`;
+                if (amount < 0) return `<span class="text-red-600">-${formatted}</span>`;
+            }
+            return formatted;
+        };
+        
+        // Function to update Fee inputs based on the selected preset (only changes percentage)
+        function updateFeeInputs() {
+            const preset = document.getElementById('feePreset').value;
+            const feePercentInput = document.getElementById('feePercent');
+
+            switch (preset) {
+                case 'standard':
+                    feePercentInput.value = 13.25;
+                    break;
+                case 'top_rated':
+                    feePercentInput.value = 12.35; 
+                    break;
+                case 'default':
+                    // User selected 'Custom/Manual Entry', focus the input field
+                    feePercentInput.focus();
+                    break;
+            }
+            // Recalculate profit every time the fee inputs are changed
+            calculateProfit();
+        }
+
+        // Helper function to update the fixed fee labels dynamically based on the threshold input
+        function updateFixedFeeLabels(thresholdValue) {
+            const thresholdFormatted = formatCurrency(thresholdValue).replace('$', '\\$'); // Escape dollar sign for use in text
+
+            document.getElementById('fixedFeeStandardLabel').textContent = 
+                `Standard Fixed Per-Order Fee (less than ${thresholdFormatted})`;
+            
+            document.getElementById('fixedFeeHighValueLabel').textContent = 
+                `High-Value Fixed Per-Order Fee (${thresholdFormatted}+)`;
+        }
+
+
+        function calculateProfit() {
+            // 1. Get Inputs
+            const quantity = safeParseFloat('quantity');
+            const singleCardPrice = safeParseFloat('itemPrice');
+            const singleCardCOGS = safeParseFloat('costOfGoods');
+
+            // Get Discount Rates from Inputs
+            const discount2Card = safeParseFloat('discount2Card') / 100;
+            const discount3Card = safeParseFloat('discount3Card') / 100;
+            const discount4Card = safeParseFloat('discount4Card') / 100;
+            const discount5PlusCard = safeParseFloat('discount5PlusCard') / 100;
+
+            // Per-Order Costs
+            const shippingCharged = safeParseFloat('shippingCharged');
+            const shippingCost = safeParseFloat('shippingCost');
+            const packagingCost = safeParseFloat('packagingCost');
+            const adRatePercent = safeParseFloat('marketingCost'); // Now read as a percentage
+
+            // Fees & Overhead
+            const feePercent = safeParseFloat('feePercent'); 
+            const fixedFeeStandard = safeParseFloat('fixedFeeStandard'); 
+            const fixedFeeHighValue = safeParseFloat('fixedFeeHighValue'); 
+            const feeThreshold = safeParseFloat('feeThreshold'); 
+
+            const annualFixedCost = safeParseFloat('annualFixedCost');
+            const annualSalesEstimate = safeParseFloat('annualSalesEstimate');
+            
+            // Update labels immediately based on the current threshold
+            updateFixedFeeLabels(feeThreshold);
+
+            // Guardrail for invalid quantity
+            if (quantity <= 0) {
+                document.querySelectorAll('.text-lg, .text-xl, .text-2xl, .text-3xl').forEach(el => el.textContent = '$0.00');
+                document.getElementById('subtotal').textContent = '$0.00';
+                document.getElementById('discountAmount').textContent = '-$0.00';
+                document.getElementById('discountRateDisplay').textContent = '0.00%';
+                document.getElementById('fixedFeeApplied').textContent = '$0.00';
+                document.getElementById('marketingDollarDisplay').textContent = '-$0.00';
+                document.getElementById('overheadAllocation').textContent = '-$0.00'; // Reset overhead on invalid input
+                document.getElementById('profitMessage').textContent = 'Please enter a quantity greater than zero.';
+                return;
+            }
+
+
+            // 2. Apply Tiered Discount Logic
+            const subtotal = singleCardPrice * quantity;
+            let discountRate = 0; 
+
+            if (quantity >= 5) {
+                discountRate = discount5PlusCard;
+            } else if (quantity === 4) {
+                discountRate = discount4Card;
+            } else if (quantity === 3) {
+                discountRate = discount3Card;
+            } else if (quantity === 2) {
+                discountRate = discount2Card;
+            } 
+
+            const discountMultiplier = 1.0 - discountRate;
+            const itemPriceAfterDiscount = subtotal * discountMultiplier;
+            const discountAmount = subtotal * discountRate;
+
+            // 3. Calculate Total Sale Amount (A) - Used for fee calculation
+            const totalSale = itemPriceAfterDiscount + shippingCharged; // Total revenue received
+
+            // 4. Determine Dynamic Fixed Fee
+            let finalFixedFee = fixedFeeStandard;
+            if (totalSale >= feeThreshold) {
+                finalFixedFee = fixedFeeHighValue;
+            }
+            
+            // 5. Calculate Marketing/Ad Dollar Cost
+            const marketingDollarCost = totalSale * (adRatePercent / 100);
+
+
+            // 6. Calculate Total Costs (C)
+            const totalCOGS = singleCardCOGS * quantity; 
+
+            // Calculate Overhead Allocation (based on Total Sale)
+            let overheadAllocation = 0;
+            if (annualSalesEstimate > 0) {
+                const overheadRate = (annualFixedCost / annualSalesEstimate);
+                overheadAllocation = totalSale * overheadRate;
+            }
+
+            // Platform Fees are based on Total Sale Amount (A) and the dynamically determined fixed fee
+            const platformFeeAmount = (totalSale * (feePercent / 100)) + finalFixedFee;
+
+            // All operational costs (COGS is total, others are per-order)
+            // Note: marketingCost is now marketingDollarCost
+            const totalOperationalCosts = totalCOGS + shippingCost + packagingCost + marketingDollarCost + overheadAllocation;
+
+
+            // 7. Calculate Net Profit (Total Order)
+            const netProfit = totalSale - platformFeeAmount - totalOperationalCosts;
+
+            // 8. Calculate Net Profit Per Card
+            const profitPerCard = netProfit / quantity;
+
+            // 9. Update the UI
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('discountAmount').textContent = formatCurrency(-discountAmount); 
+            document.getElementById('discountRateDisplay').textContent = `${(discountRate * 100).toFixed(2)}%`;
+            document.getElementById('fixedFeeApplied').textContent = formatCurrency(finalFixedFee);
+
+            document.getElementById('totalSale').textContent = formatCurrency(totalSale);
+            document.getElementById('totalCogs').textContent = formatCurrency(-totalCOGS);
+            document.getElementById('marketingDollarDisplay').textContent = formatCurrency(-marketingDollarCost);
+            document.getElementById('feeAmount').textContent = formatCurrency(-platformFeeAmount);
+            document.getElementById('overheadAllocation').textContent = formatCurrency(-overheadAllocation);
+            
+            // Total Profit (Order)
+            const netProfitElement = document.getElementById('netProfit');
+            netProfitElement.innerHTML = formatCurrency(netProfit, true);
+            netProfitElement.className = netProfit >= 0
+                ? 'text-3xl font-extrabold text-green-700'
+                : 'text-3xl font-extrabold text-red-600';
+
+            // Profit Per Card
+            const profitPerCardElement = document.getElementById('profitPerCard');
+            profitPerCardElement.innerHTML = formatCurrency(profitPerCard, true);
+            profitPerCardElement.className = profitPerCard >= 0
+                ? 'text-2xl font-extrabold text-green-700'
+                : 'text-2xl font-extrabold text-red-600';
+
+
+            // Update profit message
+            const profitMessage = document.getElementById('profitMessage');
+            if (netProfit > 0) {
+                profitMessage.textContent = `Profitability achieved. You are making ${formatCurrency(netProfit)} on this ${quantity} card order.`;
+            } else if (netProfit < 0) {
+                profitMessage.textContent = `Warning: This order is currently losing ${formatCurrency(-netProfit)} after accounting for all costs.`;
+            } else {
+                profitMessage.textContent = 'This order has reached the break-even point.';
+            }
+        }
+
+        // Run calculation on load with default values
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize fee percentage inputs based on the default selector value, and then run calculation
+            updateFeeInputs(); 
+        });
+    </script>
+</body>
+</html>
